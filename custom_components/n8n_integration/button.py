@@ -22,7 +22,6 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the button platform."""
-
     workflows = entry.runtime_data.coordinator.data["data"]
 
     entities = []

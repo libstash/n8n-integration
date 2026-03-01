@@ -108,7 +108,6 @@ class N8nOptionsFlowHandler(config_entries.OptionsFlowWithReload):
         user_input: dict[str, Any] | None = None,
     ) -> config_entries.ConfigFlowResult:
         """Manage the integration options."""
-
         _errors = {}
         if user_input is not None:
             try:
