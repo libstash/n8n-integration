@@ -4,8 +4,8 @@
       "user": {
         "description": "If you need help with the configuration have a look here: https://github.com/libstash/n8n-integration",
         "data": {
-          "username": "Username",
-          "password": "Password"
+          "url": "URL",
+          "api_token": "API Token"
         }
       }
     },
@@ -16,6 +16,16 @@
     },
     "abort": {
       "already_configured": "This entry is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "url": "URL",
+          "api_token": "API Token"
+        }
+      }
     }
   }
 }
