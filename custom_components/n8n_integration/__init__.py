@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 PLATFORMS: list[Platform] = [
     Platform.BUTTON,
-    # Platform.TODO,
+    Platform.TODO,
 ]
 
 
