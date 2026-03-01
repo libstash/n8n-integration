@@ -12,6 +12,7 @@ from homeassistant.components.todo.const import (
     TodoItemStatus,
     TodoListEntityFeature,
 )
+from homeassistant.const import EntityCategory
 
 from .entity import N8nIntegrationEntity
 
@@ -41,6 +42,7 @@ class N8nIntegrationTriggers(N8nIntegrationEntity, TodoListEntity):
     _attr_name = "n8n triggers"
     _attr_has_entity_name = True
     _attr_supported_features = TodoListEntityFeature(0)
+    _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, coordinator: N8nDataUpdateCoordinator) -> None:
         """Initialize the todo list entity."""
