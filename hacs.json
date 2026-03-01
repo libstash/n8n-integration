@@ -1,5 +1,5 @@
 {
   "name": "n8n integration",
-  "homeassistant": "2026.2.3",
+  "homeassistant": "2025.2.4",
   "hacs": "2.0.5"
 }
