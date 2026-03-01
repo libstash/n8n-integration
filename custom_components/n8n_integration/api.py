@@ -113,6 +113,12 @@ class N8nIntegrationApiClient:
             raise N8nIntegrationApiClientCommunicationError(
                 msg,
             ) from exception
+        except N8nIntegrationApiClientAuthenticationError as exception:
+            # Re-raise so config flow can catch it
+            raise
+        except N8nIntegrationApiClientCommunicationError as exception:
+            # Re-raise so config flow can catch it
+            raise
         except Exception as exception:  # pylint: disable=broad-except
             msg = f"Something really wrong happened! - {exception}"
             raise N8nIntegrationApiClientError(
