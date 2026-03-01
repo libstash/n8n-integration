@@ -10,7 +10,7 @@
       }
     },
     "error": {
-      "auth": "Username/Password is wrong.",
+      "auth": "URL/API Token is wrong.",
       "connection": "Unable to connect to the server.",
       "unknown": "Unknown error occurred."
     },
@@ -26,6 +26,11 @@
           "api_token": "API Token"
         }
       }
+    },
+    "error": {
+      "auth": "URL/API Token is wrong.",
+      "connection": "Unable to connect to the server.",
+      "unknown": "Unknown error occurred."
     }
   }
 }

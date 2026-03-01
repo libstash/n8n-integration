@@ -89,7 +89,7 @@ class N8nFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             api_token=api_token,
             session=async_create_clientsession(self.hass),
         )
-        await client.async_get_data()
+        await client.async_get_workflows()
 
     @staticmethod
     @callback
@@ -108,8 +108,8 @@ class N8nOptionsFlowHandler(config_entries.OptionsFlowWithReload):
         user_input: dict[str, Any] | None = None,
     ) -> config_entries.ConfigFlowResult:
         """Manage the integration options."""
-        errors: dict[str, str] = {}
 
+        _errors = {}
         if user_input is not None:
             try:
                 await self._test_credentials(
@@ -118,13 +118,13 @@ class N8nOptionsFlowHandler(config_entries.OptionsFlowWithReload):
                 )
             except N8nIntegrationApiClientAuthenticationError as exception:
                 LOGGER.warning(exception)
-                errors["base"] = "auth"
+                _errors["base"] = "auth"
             except N8nIntegrationApiClientCommunicationError as exception:
                 LOGGER.error(exception)
-                errors["base"] = "connection"
+                _errors["base"] = "connection"
             except N8nIntegrationApiClientError as exception:
                 LOGGER.exception(exception)
-                errors["base"] = "unknown"
+                _errors["base"] = "unknown"
             else:
                 data = {
                     **self.config_entry.data,
@@ -167,7 +167,7 @@ class N8nOptionsFlowHandler(config_entries.OptionsFlowWithReload):
                     ),
                 },
             ),
-            errors=errors,
+            errors=_errors,
         )
 
     async def _test_credentials(self, url: str, api_token: str) -> None:
@@ -177,4 +177,4 @@ class N8nOptionsFlowHandler(config_entries.OptionsFlowWithReload):
             api_token=api_token,
             session=async_create_clientsession(self.hass),
         )
-        await client.async_get_data()
+        await client.async_get_workflows()

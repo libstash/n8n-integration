@@ -27,6 +27,7 @@ class N8nIntegrationApiClientAuthenticationError(
 
 def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
     """Verify that the response is valid."""
+
     if response.status in (401, 403):
         msg = "Invalid credentials"
         raise N8nIntegrationApiClientAuthenticationError(
@@ -48,13 +49,6 @@ class N8nIntegrationApiClient:
         self._url = url.rstrip("/")
         self._api_token = api_token
         self._session = session
-
-    async def async_get_data(self) -> Any:
-        """Get data from the API."""
-        return await self._api_wrapper(
-            method="get",
-            url="https://jsonplaceholder.typicode.com/posts/1",
-        )
 
     async def async_get_workflows(self) -> Any:
         """Get workflows from the API."""
