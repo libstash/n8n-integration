@@ -1,0 +1,35 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "url": "URL",
+          "api_token": "API Token"
+        }
+      }
+    },
+    "error": {
+      "auth": "URL/API Token is wrong.",
+      "connection": "Unable to connect to the server.",
+      "unknown": "Unknown error occurred."
+    },
+    "abort": {
+      "already_configured": "This entry is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "url": "URL",
+          "api_token": "API Token"
+        }
+      }
+    },
+    "error": {
+      "auth": "URL/API Token is wrong.",
+      "connection": "Unable to connect to the server.",
+      "unknown": "Unknown error occurred."
+    }
+  }
+}

@@ -1,46 +1,53 @@
-# Notice
+# n8n Integration for Home Assistant
 
-The component and platforms in this repository are not meant to be used by a
-user, but as a "blueprint" that custom component developers can build
-upon, to make more awesome stuff.
+Connect Home Assistant to your n8n instance. This integration discovers active workflows, exposes webhook triggers as buttons you can press from Home Assistant, and lists trigger endpoints and forms in the **n8n triggers** list.
 
-HAVE FUN! 😎
+## Features
+- Creates a button entity for every `webhook` node in your active n8n workflows so you can fire the webhook from Home Assistant.
+- Exposes a read-only triggers list entity that enumerates webhook and form triggers; form triggers include the generated form URL for convenience.
+- Uses Home Assistant's config flow (UI setup) with validation against your n8n API.
 
-## Why?
+## Requirements
+- A reachable n8n base URL (for example, https://n8n.example.com).
+- An n8n API token with permission to read workflows.
+- tested with recent core build
 
-This is simple, by having custom_components look (README + structure) the same
-it is easier for developers to help each other and for users to start using them.
+## Installation
+### Option 1: HACS (recommended)
+1. In HACS, add this repository as a custom integration: `https://github.com/libstash/n8n-integration`.
+2. Install **n8n Integration** from the Integrations section.
 
-If you are a developer and you want to add things to this "blueprint" that you think more
-developers will have use for, please open a PR to add it :)
+### Option 2: Manual copy
+1. Download this repository.
+2. Copy the `custom_components/n8n_integration` folder into your Home Assistant `custom_components` directory.
+3. Restart Home Assistant.
 
-## What?
+## Configuration
+1. In Home Assistant, go to Settings → Devices & Services → Add Integration.
+2. Search for **n8n Integration** and select it.
+3. Enter your n8n base URL and API token. The flow validates the token by fetching active workflows.
+4. After setup, entities are created automatically. If you rotate credentials later, use the integration's Options to update the URL/token.
 
-This repository contains multiple files, here is a overview:
+## Entities
+- Buttons: One per `webhook` node in each active workflow. Pressing the button triggers the corresponding webhook in n8n.
+- Triggers list: A read-only list named **n8n triggers** containing webhook and form triggers. Items show workflow and node names; form trigger items include the form URL in the description.
 
-File | Purpose | Documentation
--- | -- | --
-`.devcontainer.json` | Used for development/testing with Visual Studio Code. | [Documentation](https://code.visualstudio.com/docs/remote/containers)
-`.github/ISSUE_TEMPLATE/*.yml` | Templates for the issue tracker | [Documentation](https://help.github.com/en/github/building-a-strong-community/configuring-issue-templates-for-your-repository)
-`custom_components/integration_blueprint/*` | Integration files, this is where everything happens. | [Documentation](https://developers.home-assistant.io/docs/creating_component_index)
-`CONTRIBUTING.md` | Guidelines on how to contribute. | [Documentation](https://help.github.com/en/github/building-a-strong-community/setting-guidelines-for-repository-contributors)
-`LICENSE` | The license file for the project. | [Documentation](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/licensing-a-repository)
-`README.md` | The file you are reading now, should contain info about the integration, installation and configuration instructions. | [Documentation](https://help.github.com/en/github/writing-on-github/basic-writing-and-formatting-syntax)
-`requirements.txt` | Python packages used for development/lint/testing this integration. | [Documentation](https://pip.pypa.io/en/stable/user_guide/#requirements-files)
+## Example: trigger links card
+Add a Markdown card that lists links to available form triggers:
 
-## How?
+```
+{% set items = state_attr('todo.n8n_triggers', 'triggers') or [] %}
 
-1. Create a new repository in GitHub, using this repository as a template by clicking the "Use this template" button in the GitHub UI.
-1. Open your new repository in Visual Studio Code devcontainer (Preferably with the "`Dev Containers: Clone Repository in Named Container Volume...`" option).
-1. Rename all instances of the `integration_blueprint` to `custom_components/<your_integration_domain>` (e.g. `custom_components/awesome_integration`).
-1. Rename all instances of the `Integration Blueprint` to `<Your Integration Name>` (e.g. `Awesome Integration`).
-1. Run the `scripts/develop` to start HA and test out your new integration.
+{% for item in items %}
+- {% if item.description %}[{{ item.name }}]({{ item.description }}){% else %}{{ item.name }}{% endif %}
+{% endfor %}
+```
 
-## Next steps
+## How it works
+- The integration pulls active workflows from `GET /api/v1/workflows?active=true` using your API token.
+- Only webhook- and form-based triggers are surfaced; other node types are ignored.
 
-These are some next steps you may want to look into:
-- Add tests to your integration, [`pytest-homeassistant-custom-component`](https://github.com/MatthewFlamm/pytest-homeassistant-custom-component) can help you get started.
-- Add brand images (logo/icon) to https://github.com/home-assistant/brands.
-- Create your first release.
-- Share your integration on the [Home Assistant Forum](https://community.home-assistant.io/).
-- Submit your integration to [HACS](https://hacs.xyz/docs/publish/start).
+## Troubleshooting
+- Auth errors: Confirm the API token is valid and belongs to the provided n8n URL.
+- Connection errors: Ensure Home Assistant can reach the n8n URL (network, SSL, reverse proxy).
+- Missing entities: Verify the workflows are active and contain `webhook` or `formTrigger` nodes.
