@@ -1,4 +1,4 @@
-"""Sample API Client."""
+"""n8n API Client."""
 
 from __future__ import annotations
 
@@ -9,18 +9,18 @@ import aiohttp
 import async_timeout
 
 
-class IntegrationBlueprintApiClientError(Exception):
+class N8nIntegrationApiClientError(Exception):
     """Exception to indicate a general API error."""
 
 
-class IntegrationBlueprintApiClientCommunicationError(
-    IntegrationBlueprintApiClientError,
+class N8nIntegrationApiClientCommunicationError(
+    N8nIntegrationApiClientError,
 ):
     """Exception to indicate a communication error."""
 
 
-class IntegrationBlueprintApiClientAuthenticationError(
-    IntegrationBlueprintApiClientError,
+class N8nIntegrationApiClientAuthenticationError(
+    N8nIntegrationApiClientError,
 ):
     """Exception to indicate an authentication error."""
 
@@ -29,24 +29,24 @@ def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
     """Verify that the response is valid."""
     if response.status in (401, 403):
         msg = "Invalid credentials"
-        raise IntegrationBlueprintApiClientAuthenticationError(
+        raise N8nIntegrationApiClientAuthenticationError(
             msg,
         )
     response.raise_for_status()
 
 
-class IntegrationBlueprintApiClient:
-    """Sample API Client."""
+class N8nIntegrationApiClient:
+    """n8n API Client."""
 
     def __init__(
         self,
-        username: str,
-        password: str,
+        url: str,
+        api_token: str,
         session: aiohttp.ClientSession,
     ) -> None:
-        """Sample API Client."""
-        self._username = username
-        self._password = password
+        """n8n API Client."""
+        self._url = url.rstrip("/")
+        self._api_token = api_token
         self._session = session
 
     async def async_get_data(self) -> Any:
@@ -56,13 +56,38 @@ class IntegrationBlueprintApiClient:
             url="https://jsonplaceholder.typicode.com/posts/1",
         )
 
-    async def async_set_title(self, value: str) -> Any:
-        """Get data from the API."""
+    async def async_get_workflows(self) -> Any:
+        """Get workflows from the API."""
         return await self._api_wrapper(
-            method="patch",
-            url="https://jsonplaceholder.typicode.com/posts/1",
-            data={"title": value},
-            headers={"Content-type": "application/json; charset=UTF-8"},
+            method="get",
+            url=f"{self._url}/api/v1/workflows?active=true",
+            headers={"X-N8N-API-KEY": self._api_token},
+        )
+
+    async def async_get_workflow(self, workflow_id: str) -> Any:
+        """Get workflow from the API."""
+        return await self._api_wrapper(
+            method="get",
+            url=f"{self._url}/api/v1/workflows/{workflow_id}",
+            headers={"X-N8N-API-KEY": self._api_token},
+        )
+
+    async def async_trigger_webhook(self, webhook_node: dict) -> Any:
+        """Trigger the n8n webhook node using its parameters."""
+        parameters = webhook_node.get("parameters", {})
+        method = parameters.get("httpMethod")
+        path = parameters.get("path")
+        if not method or not path:
+            raise N8nIntegrationApiClientError(
+                f"Webhook node is missing required parameters: method={method}, path={path}"
+            )
+        method = method.lower()
+        url = f"{self._url}/webhook/{path}"
+        headers = {}
+        return await self._api_wrapper(
+            method=method,
+            url=url,
+            headers=headers,
         )
 
     async def _api_wrapper(
@@ -86,16 +111,16 @@ class IntegrationBlueprintApiClient:
 
         except TimeoutError as exception:
             msg = f"Timeout error fetching information - {exception}"
-            raise IntegrationBlueprintApiClientCommunicationError(
+            raise N8nIntegrationApiClientCommunicationError(
                 msg,
             ) from exception
         except (aiohttp.ClientError, socket.gaierror) as exception:
             msg = f"Error fetching information - {exception}"
-            raise IntegrationBlueprintApiClientCommunicationError(
+            raise N8nIntegrationApiClientCommunicationError(
                 msg,
             ) from exception
         except Exception as exception:  # pylint: disable=broad-except
             msg = f"Something really wrong happened! - {exception}"
-            raise IntegrationBlueprintApiClientError(
+            raise N8nIntegrationApiClientError(
                 msg,
             ) from exception

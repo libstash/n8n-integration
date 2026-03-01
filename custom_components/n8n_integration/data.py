@@ -1,4 +1,4 @@
-"""Custom types for integration_blueprint."""
+"""Custom types for n8n_integration."""
 
 from __future__ import annotations
 
@@ -9,17 +9,17 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.loader import Integration
 
-    from .api import IntegrationBlueprintApiClient
-    from .coordinator import BlueprintDataUpdateCoordinator
+    from .api import N8nIntegrationApiClient
+    from .coordinator import N8nDataUpdateCoordinator
 
 
-type IntegrationBlueprintConfigEntry = ConfigEntry[IntegrationBlueprintData]
+type N8nIntegrationConfigEntry = ConfigEntry[N8nIntegrationData]
 
 
 @dataclass
-class IntegrationBlueprintData:
-    """Data for the Blueprint integration."""
+class N8nIntegrationData:
+    """Data for the n8n integration."""
 
-    client: IntegrationBlueprintApiClient
-    coordinator: BlueprintDataUpdateCoordinator
+    client: N8nIntegrationApiClient
+    coordinator: N8nDataUpdateCoordinator
     integration: Integration
