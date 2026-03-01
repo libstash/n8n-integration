@@ -2,7 +2,6 @@
   "config": {
     "step": {
       "user": {
-        "description": "If you need help with the configuration have a look here: https://github.com/libstash/n8n-integration",
         "data": {
           "url": "URL",
           "api_token": "API Token"
