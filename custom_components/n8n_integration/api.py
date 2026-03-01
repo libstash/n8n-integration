@@ -27,7 +27,6 @@ class N8nIntegrationApiClientAuthenticationError(
 
 def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
     """Verify that the response is valid."""
-
     if response.status in (401, 403):
         msg = "Invalid credentials"
         raise N8nIntegrationApiClientAuthenticationError(
@@ -72,9 +71,11 @@ class N8nIntegrationApiClient:
         method = parameters.get("httpMethod")
         path = parameters.get("path")
         if not method or not path:
-            raise N8nIntegrationApiClientError(
-                f"Webhook node is missing required parameters: method={method}, path={path}"
+            msg = (
+                "Webhook node is missing required parameters: "
+                f"method={method}, path={path}"
             )
+            raise N8nIntegrationApiClientError(msg)
         method = method.lower()
         url = f"{self._url}/webhook/{path}"
         headers = {}
@@ -113,10 +114,10 @@ class N8nIntegrationApiClient:
             raise N8nIntegrationApiClientCommunicationError(
                 msg,
             ) from exception
-        except N8nIntegrationApiClientAuthenticationError as exception:
+        except N8nIntegrationApiClientAuthenticationError:
             # Re-raise so config flow can catch it
             raise
-        except N8nIntegrationApiClientCommunicationError as exception:
+        except N8nIntegrationApiClientCommunicationError:
             # Re-raise so config flow can catch it
             raise
         except Exception as exception:  # pylint: disable=broad-except
