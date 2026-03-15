@@ -14,11 +14,14 @@ from homeassistant.util import dt as dt_util
 from .entity import N8nIntegrationEntity
 
 if TYPE_CHECKING:
+    from datetime import datetime
+
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
     from .coordinator import N8nDataUpdateCoordinator
     from .data import N8nIntegrationConfigEntry
+
 
 TRIGGER_NODES = {"n8n-nodes-base.webhook", "n8n-nodes-base.formTrigger"}
 
@@ -33,7 +36,7 @@ async def async_setup_entry(
 
     workflows = coordinator.data["data"]
 
-    async_add_entities(
+    entities = [
         N8nIntegrationTriggerSensor(
             coordinator=coordinator,
             node=node,
@@ -42,7 +45,9 @@ async def async_setup_entry(
         for workflow in workflows
         for node in workflow.get("nodes", [])
         if node.get("type") in TRIGGER_NODES
-    )
+    ]
+
+    async_add_entities(entities)
 
 
 class N8nIntegrationTriggerSensor(N8nIntegrationEntity, SensorEntity):
@@ -67,7 +72,7 @@ class N8nIntegrationTriggerSensor(N8nIntegrationEntity, SensorEntity):
 
         self._attr_unique_id = f"{self._attr_unique_id}-{workflow_id}-{node_id}-sensor"
 
-        self.entity_description = SensorEntityDescription(
+        self._attr_entity_description = SensorEntityDescription(
             key=f"{workflow_id}-{node_id}",
             name=f"{workflow_name}: {node_name}",
             icon="mdi:transit-connection-horizontal",
@@ -78,7 +83,7 @@ class N8nIntegrationTriggerSensor(N8nIntegrationEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes."""
         api_client = self.coordinator.config_entry.runtime_data.client
-        url = getattr(api_client, "_url", None)
+        url = getattr(api_client, "url", None)
         node_type = self._node.get("type")
 
         attrs = {
@@ -95,7 +100,9 @@ class N8nIntegrationTriggerSensor(N8nIntegrationEntity, SensorEntity):
         return attrs
 
     @property
-    def native_value(self) -> str | None:
+    def native_value(self) -> datetime | None:
         """Return the native value of the sensor."""
         update_at = self._workflow.get("updatedAt")
-        return dt_util.parse_datetime(update_at)
+        if update_at:
+            return dt_util.parse_datetime(update_at)
+        return None

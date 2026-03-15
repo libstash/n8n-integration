@@ -134,3 +134,8 @@ class N8nIntegrationApiClient:
             raise N8nIntegrationApiClientError(
                 msg,
             ) from exception
+
+    @property
+    def url(self) -> str:
+        """Get client URL."""
+        return self._url
