@@ -4,13 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from homeassistant.util import dt as dt_util
-
 from homeassistant.components.sensor import (
-    SensorEntity,
     SensorDeviceClass,
+    SensorEntity,
     SensorEntityDescription,
 )
+from homeassistant.util import dt as dt_util
 
 from .entity import N8nIntegrationEntity
 
@@ -21,13 +20,7 @@ if TYPE_CHECKING:
     from .coordinator import N8nDataUpdateCoordinator
     from .data import N8nIntegrationConfigEntry
 
-ENTITY_DESCRIPTIONS = (
-    SensorEntityDescription(
-        key="integration_blueprint",
-        name="Integration Sensor",
-        icon="mdi:transit-connection-horizontal",
-    ),
-)
+TRIGGER_NODES = {"n8n-nodes-base.webhook", "n8n-nodes-base.formTrigger"}
 
 
 async def async_setup_entry(
@@ -36,12 +29,9 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the sensor platform."""
-
     coordinator = entry.runtime_data.coordinator
 
     workflows = coordinator.data["data"]
-
-    TRIGGER_NODES = {"n8n-nodes-base.webhook", "n8n-nodes-base.formTrigger"}
 
     async_add_entities(
         N8nIntegrationTriggerSensor(

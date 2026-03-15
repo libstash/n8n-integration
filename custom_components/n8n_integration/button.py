@@ -76,14 +76,13 @@ class N8nWorkflowButton(N8nIntegrationEntity, ButtonEntity):
 
     async def async_press(self, **_: Any) -> None:
         """Handle the button press to trigger the workflow webhook node."""
-
         options = {}
         if self._last_triggered_at is not None:
             options["last_triggered_at"] = self._last_triggered_at
 
-        result = await self.coordinator.config_entry.runtime_data.client.async_trigger_webhook(
-            self._webhook_node, options
-        )
+        client = self.coordinator.config_entry.runtime_data.client
+
+        result = await client.async_trigger_webhook(self._webhook_node, options)
 
         parameters = self._webhook_node.get("parameters", {})
         if parameters.get("responseMode") == "responseNode":
