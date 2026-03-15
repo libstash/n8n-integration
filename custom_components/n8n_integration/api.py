@@ -65,10 +65,10 @@ class N8nIntegrationApiClient:
             headers={"X-N8N-API-KEY": self._api_token},
         )
 
-    async def async_trigger_webhook(self, webhook_node: dict) -> Any:
+    async def async_trigger_webhook(self, webhook_node: dict, options: dict) -> Any:
         """Trigger the n8n webhook node using its parameters."""
         parameters = webhook_node.get("parameters", {})
-        method = parameters.get("httpMethod")
+        method = parameters.get("httpMethod", "GET")
         path = parameters.get("path")
         if not method or not path:
             msg = (
@@ -79,10 +79,17 @@ class N8nIntegrationApiClient:
         method = method.lower()
         url = f"{self._url}/webhook/{path}"
         headers = {}
+
+        last_triggered_at = options.get("last_triggered_at")
+        params = {}
+        if last_triggered_at is not None:
+            params["last_triggered_at"] = str(last_triggered_at)
+
         return await self._api_wrapper(
             method=method,
             url=url,
             headers=headers,
+            params=params,
         )
 
     async def _api_wrapper(
@@ -91,6 +98,7 @@ class N8nIntegrationApiClient:
         url: str,
         data: dict | None = None,
         headers: dict | None = None,
+        params: dict | None = None,
     ) -> Any:
         """Get information from the API."""
         try:
@@ -100,6 +108,7 @@ class N8nIntegrationApiClient:
                     url=url,
                     headers=headers,
                     json=data,
+                    params=params,
                 )
                 _verify_response_or_raise(response)
                 return await response.json()
@@ -125,3 +134,8 @@ class N8nIntegrationApiClient:
             raise N8nIntegrationApiClientError(
                 msg,
             ) from exception
+
+    @property
+    def url(self) -> str:
+        """Get client URL."""
+        return self._url
