@@ -66,10 +66,29 @@ class N8nWorkflowButton(N8nIntegrationEntity, ButtonEntity):
         # Ensure unique_id is unique per workflow, node, and config entry
         node_id = str(webhook_node.get("id", webhook_node.get("name", "webhook")))
         self._attr_unique_id = f"{self._attr_unique_id}-{workflow_id}-{node_id}-button"
+        self._last_triggered_at = None
+        self._response = {}  # Local storage for API results
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return the state attributes."""
+        return {"response": self._response}
 
     async def async_press(self, **_: Any) -> None:
         """Handle the button press to trigger the workflow webhook node."""
-        await self.coordinator.config_entry.runtime_data.client.async_trigger_webhook(
-            self._webhook_node
+
+        options = {}
+        if self._last_triggered_at is not None:
+            options["last_triggered_at"] = self._last_triggered_at
+
+        result = await self.coordinator.config_entry.runtime_data.client.async_trigger_webhook(
+            self._webhook_node, options
         )
+
+        parameters = self._webhook_node.get("parameters", {})
+        if parameters.get("responseMode") == "responseNode":
+            self._response = result
+
+        self._last_triggered_at = self.state
+        self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
