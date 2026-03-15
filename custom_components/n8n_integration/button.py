@@ -36,14 +36,13 @@ async def async_setup_entry(
                 entity_description = ButtonEntityDescription(
                     key=f"{workflow_id}-{node_id}",
                     name=f"{workflow_name}: {node_name}",
-                    icon="mdi:gesture-tap",
                 )
                 entities.append(
                     N8nWorkflowButton(
                         coordinator=entry.runtime_data.coordinator,
                         entity_description=entity_description,
-                        workflow_id=workflow_id,
-                        webhook_node=node,
+                        workflow=workflow,
+                        node=node,
                     )
                 )
     async_add_entities(entities)
@@ -56,15 +55,21 @@ class N8nWorkflowButton(N8nIntegrationEntity, ButtonEntity):
         self,
         coordinator: N8nDataUpdateCoordinator,
         entity_description: ButtonEntityDescription,
-        workflow_id: str,
-        webhook_node: dict,
+        workflow: Any,
+        node: Any,
     ) -> None:
         """Initialize the button class."""
         super().__init__(coordinator)
-        self.entity_description = entity_description
-        self._webhook_node = webhook_node
+        self._workflow = workflow
+        self._node = node
+        self._attr_icon = "mdi:gesture-tap"
+        self._attr_entity_description = entity_description
+
+        workflow_id = workflow.get("id")
+        node_id = node.get("id")
+
         # Ensure unique_id is unique per workflow, node, and config entry
-        node_id = str(webhook_node.get("id", webhook_node.get("name", "webhook")))
+        node_id = str(node.get("id", node.get("name", "webhook")))
         self._attr_unique_id = f"{self._attr_unique_id}-{workflow_id}-{node_id}-button"
         self._last_triggered_at = None
         self._response = {}  # Local storage for API results
@@ -82,12 +87,23 @@ class N8nWorkflowButton(N8nIntegrationEntity, ButtonEntity):
 
         client = self.coordinator.config_entry.runtime_data.client
 
-        result = await client.async_trigger_webhook(self._webhook_node, options)
+        result = await client.async_trigger_webhook(self._node, options)
 
-        parameters = self._webhook_node.get("parameters", {})
+        parameters = self._node.get("parameters", {})
         if parameters.get("responseMode") == "responseNode":
             self._response = result
 
         self._last_triggered_at = self.state
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
+
+    @property
+    def device_info(self):
+        workflow_id = self._workflow.get("id")
+        workflow_name = self._workflow.get("name")
+
+        return {
+            "identifiers": {("n8n_integration", workflow_id)},
+            "name": workflow_name,
+            "manufacturer": "n8n",
+        }

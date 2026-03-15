@@ -71,11 +71,12 @@ class N8nIntegrationTriggerSensor(N8nIntegrationEntity, SensorEntity):
         node_name = node.get("name")
 
         self._attr_unique_id = f"{self._attr_unique_id}-{workflow_id}-{node_id}-sensor"
+        self._attr_icon = "mdi:transit-connection-horizontal"
+        self._attr_name = f"{workflow_name}: {node_name}"
 
         self._attr_entity_description = SensorEntityDescription(
             key=f"{workflow_id}-{node_id}",
             name=f"{workflow_name}: {node_name}",
-            icon="mdi:transit-connection-horizontal",
             device_class=SensorDeviceClass.TIMESTAMP,
         )
 
@@ -106,3 +107,14 @@ class N8nIntegrationTriggerSensor(N8nIntegrationEntity, SensorEntity):
         if update_at:
             return dt_util.parse_datetime(update_at)
         return None
+
+    @property
+    def device_info(self):
+        workflow_id = self._workflow.get("id")
+        workflow_name = self._workflow.get("name")
+
+        return {
+            "identifiers": {("n8n_integration", workflow_id)},
+            "name": workflow_name,
+            "manufacturer": "n8n",
+        }
