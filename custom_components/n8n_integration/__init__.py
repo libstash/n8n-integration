@@ -25,8 +25,8 @@ if TYPE_CHECKING:
     from .data import N8nIntegrationConfigEntry
 
 PLATFORMS: list[Platform] = [
+    Platform.SENSOR,
     Platform.BUTTON,
-    Platform.TODO,
 ]
 
 

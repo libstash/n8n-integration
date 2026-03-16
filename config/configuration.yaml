@@ -9,4 +9,6 @@ homeassistant:
 logger:
   default: info
   logs:
-    custom_components.integration_blueprint: debug
+    custom_components.n8n_integration: debug
+
+automation: !include automations.yaml
