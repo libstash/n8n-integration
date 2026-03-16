@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
+from homeassistant.helpers.device_registry import DeviceInfo
 
 from .entity import N8nIntegrationEntity
 
@@ -14,6 +15,10 @@ if TYPE_CHECKING:
 
     from .coordinator import N8nDataUpdateCoordinator
     from .data import N8nIntegrationConfigEntry
+    from .models import Workflow, WorkflowNode
+
+
+WEBHOOK_NODES = {"n8n-nodes-base.webhook"}
 
 
 async def async_setup_entry(
@@ -22,57 +27,52 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the button platform."""
-    workflows = entry.runtime_data.coordinator.data["data"]
+    coordinator = entry.runtime_data.coordinator
+    workflows: list[Workflow] = coordinator.data.get("data", [])
 
-    entities = []
-    for workflow in workflows:
-        workflow_id = str(workflow.get("id"))
-        workflow_name = workflow.get("name", f"Workflow {workflow_id}")
-        # Add a button for each webhook node in the workflow
-        for node in workflow.get("nodes", []):
-            if node.get("type") == "n8n-nodes-base.webhook":
-                node_id = str(node.get("id", node.get("name", "webhook")))
-                node_name = node.get("name", f"Webhook {node_id}")
-                entity_description = ButtonEntityDescription(
-                    key=f"{workflow_id}-{node_id}",
-                    name=f"{workflow_name}: {node_name}",
-                )
-                entities.append(
-                    N8nWorkflowButton(
-                        coordinator=entry.runtime_data.coordinator,
-                        entity_description=entity_description,
-                        workflow=workflow,
-                        node=node,
-                    )
-                )
+    entities: list[N8nWorkflowButton] = [
+        N8nWorkflowButton(
+            coordinator=coordinator,
+            node=node,
+            workflow=workflow,
+        )
+        for workflow in workflows
+        for node in workflow.get("nodes", [])
+        if node.get("type") in WEBHOOK_NODES
+    ]
+
     async_add_entities(entities)
 
 
 class N8nWorkflowButton(N8nIntegrationEntity, ButtonEntity):
     """n8n_integration Button class."""
 
+    entity_description = ButtonEntityDescription(
+        key="n8n_webhook_trigger",
+    )
+
     def __init__(
         self,
         coordinator: N8nDataUpdateCoordinator,
-        entity_description: ButtonEntityDescription,
-        workflow: Any,
-        node: Any,
+        workflow: Workflow,
+        node: WorkflowNode,
     ) -> None:
         """Initialize the button class."""
         super().__init__(coordinator)
         self._workflow = workflow
         self._node = node
-        self._attr_icon = "mdi:gesture-tap"
-        self._attr_entity_description = entity_description
 
         workflow_id = workflow.get("id")
         node_id = node.get("id")
+        workflow_name = workflow.get("name")
+        node_name = node.get("name")
 
-        # Ensure unique_id is unique per workflow, node, and config entry
-        node_id = str(node.get("id", node.get("name", "webhook")))
         self._attr_unique_id = f"{self._attr_unique_id}-{workflow_id}-{node_id}-button"
+        self._attr_icon = "mdi:gesture-tap"
+        self._attr_name = f"{workflow_name}: {node_name}"
+
         self._last_triggered_at = None
-        self._response = {}  # Local storage for API results
+        self._response = {}
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -98,12 +98,13 @@ class N8nWorkflowButton(N8nIntegrationEntity, ButtonEntity):
         await self.coordinator.async_request_refresh()
 
     @property
-    def device_info(self):
-        workflow_id = self._workflow.get("id")
-        workflow_name = self._workflow.get("name")
+    def device_info(self) -> DeviceInfo:
+        """Return device information."""
+        workflow_id: str = self._workflow.get("id") or ""
+        workflow_name: str | None = self._workflow.get("name")
 
-        return {
-            "identifiers": {("n8n_integration", workflow_id)},
-            "name": workflow_name,
-            "manufacturer": "n8n",
-        }
+        return DeviceInfo(
+            identifiers={("n8n_integration", workflow_id)},
+            name=workflow_name,
+            manufacturer="n8n",
+        )

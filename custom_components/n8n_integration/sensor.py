@@ -1,4 +1,4 @@
-"""Sensor platform for integration_blueprint."""
+"""Sensor platform for n8n_integration."""
 
 from __future__ import annotations
 
@@ -9,8 +9,10 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorEntityDescription,
 )
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.util import dt as dt_util
 
+from .const import LOGGER
 from .entity import N8nIntegrationEntity
 
 if TYPE_CHECKING:
@@ -21,6 +23,7 @@ if TYPE_CHECKING:
 
     from .coordinator import N8nDataUpdateCoordinator
     from .data import N8nIntegrationConfigEntry
+    from .models import Workflow, WorkflowNode
 
 
 TRIGGER_NODES = {"n8n-nodes-base.webhook", "n8n-nodes-base.formTrigger"}
@@ -34,9 +37,9 @@ async def async_setup_entry(
     """Set up the sensor platform."""
     coordinator = entry.runtime_data.coordinator
 
-    workflows = coordinator.data["data"]
+    workflows: list[Workflow] = coordinator.data.get("data", [])
 
-    entities = [
+    entities: list[N8nIntegrationTriggerSensor] = [
         N8nIntegrationTriggerSensor(
             coordinator=coordinator,
             node=node,
@@ -51,19 +54,24 @@ async def async_setup_entry(
 
 
 class N8nIntegrationTriggerSensor(N8nIntegrationEntity, SensorEntity):
-    """integration_blueprint Sensor class."""
+    """n8n_integration Sensor class."""
+
+    entity_description = SensorEntityDescription(
+        key="n8n_workflow",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    )
 
     def __init__(
         self,
         coordinator: N8nDataUpdateCoordinator,
-        node: Any,
-        workflow: Any,
+        node: WorkflowNode,
+        workflow: Workflow,
     ) -> None:
         """Initialize the sensor class."""
         super().__init__(coordinator)
 
-        self._workflow = workflow
-        self._node = node
+        self._workflow: Workflow = workflow
+        self._node: WorkflowNode = node
 
         workflow_id = workflow.get("id")
         workflow_name = workflow.get("name")
@@ -74,20 +82,14 @@ class N8nIntegrationTriggerSensor(N8nIntegrationEntity, SensorEntity):
         self._attr_icon = "mdi:transit-connection-horizontal"
         self._attr_name = f"{workflow_name}: {node_name}"
 
-        self._attr_entity_description = SensorEntityDescription(
-            key=f"{workflow_id}-{node_id}",
-            name=f"{workflow_name}: {node_name}",
-            device_class=SensorDeviceClass.TIMESTAMP,
-        )
-
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes."""
         api_client = self.coordinator.config_entry.runtime_data.client
-        url = getattr(api_client, "url", None)
-        node_type = self._node.get("type")
+        url: str | None = getattr(api_client, "url", None)
+        node_type: str | None = self._node.get("type")
 
-        attrs = {
+        attrs: dict[str, Any] = {
             "workflow_id": self._workflow.get("id"),
             "workflow_name": self._workflow.get("name"),
             "n8n_url": url,
@@ -95,26 +97,33 @@ class N8nIntegrationTriggerSensor(N8nIntegrationEntity, SensorEntity):
         }
 
         if node_type == "n8n-nodes-base.formTrigger":
-            webhook_id = self._node.get("webhookId")
-            attrs["form_url"] = f"{url}/form/{webhook_id}"
+            webhook_id: str | None = self._node.get("webhookId")
+            if webhook_id and url:
+                attrs["form_url"] = f"{url}/form/{webhook_id}"
+            else:
+                LOGGER.warning(
+                    "Form trigger node %s has no webhookId or URL",
+                    self._node.get("id"),
+                )
 
         return attrs
 
     @property
     def native_value(self) -> datetime | None:
         """Return the native value of the sensor."""
-        update_at = self._workflow.get("updatedAt")
-        if update_at:
-            return dt_util.parse_datetime(update_at)
+        updated_at = self._workflow.get("updatedAt")
+        if updated_at:
+            return dt_util.parse_datetime(updated_at)
         return None
 
     @property
-    def device_info(self):
-        workflow_id = self._workflow.get("id")
-        workflow_name = self._workflow.get("name")
+    def device_info(self) -> DeviceInfo:
+        """Return device information."""
+        workflow_id: str = self._workflow.get("id") or ""
+        workflow_name: str | None = self._workflow.get("name")
 
-        return {
-            "identifiers": {("n8n_integration", workflow_id)},
-            "name": workflow_name,
-            "manufacturer": "n8n",
-        }
+        return DeviceInfo(
+            identifiers={("n8n_integration", workflow_id)},
+            name=workflow_name,
+            manufacturer="n8n",
+        )

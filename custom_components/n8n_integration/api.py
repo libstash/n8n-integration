@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import socket
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import aiohttp
 import async_timeout
+
+if TYPE_CHECKING:
+    from .models import WorkflowNode
 
 
 class N8nIntegrationApiClientError(Exception):
@@ -65,7 +68,11 @@ class N8nIntegrationApiClient:
             headers={"X-N8N-API-KEY": self._api_token},
         )
 
-    async def async_trigger_webhook(self, webhook_node: dict, options: dict) -> Any:
+    async def async_trigger_webhook(
+        self,
+        webhook_node: WorkflowNode,
+        options: dict[str, Any],
+    ) -> Any:
         """Trigger the n8n webhook node using its parameters."""
         parameters = webhook_node.get("parameters", {})
         method = parameters.get("httpMethod", "GET")
