@@ -42,7 +42,7 @@
             {
               "keyName": "createdAt",
               "condition": "gt",
-              "keyValue": "={{ $json.query.last_triggered_at }}"
+              "keyValue": "={{ $json.query._last_triggered_at }}"
             }
           ]
         }
@@ -89,7 +89,7 @@
           "conditions": [
             {
               "id": "5cb60d24-18d1-4f49-b184-b6e699cb1917",
-              "leftValue": "={{ $json.query.last_triggered_at }}",
+              "leftValue": "={{ $json.query._last_triggered_at }}",
               "rightValue": "",
               "operator": {
                 "type": "string",
@@ -106,7 +106,7 @@
       "typeVersion": 2.3,
       "position": [224, 80],
       "id": "94e71021-87a2-48fc-9800-1e63b89636d3",
-      "name": "Check last_triggered_at"
+      "name": "Check _last_triggered_at"
     },
     {
       "parameters": {
@@ -146,7 +146,7 @@
       "main": [
         [
           {
-            "node": "Check last_triggered_at",
+            "node": "Check _last_triggered_at",
             "type": "main",
             "index": 0
           }
@@ -175,7 +175,7 @@
         ]
       ]
     },
-    "Check last_triggered_at": {
+    "Check _last_triggered_at": {
       "main": [
         [
           {

@@ -154,8 +154,9 @@ mode: single
 
 ## How it works
 
-- The integration pulls active workflows from `GET /api/v1/workflows?active=true` using your API token.
-- Only webhook- and form-based triggers are surfaced; other node types are ignored.
+- The integration pulls active workflows from n8n `GET /api/v1/workflows?active=true` using your API token.
+- Only webhook- and form-based triggers are displayed; other node types are ignored.
+- **Note:** A `_last_triggered_at` timestamp is added to webhooks query param to prevent duplicate notifications and filter for only the latest updates.
 
 ## Troubleshooting
 
