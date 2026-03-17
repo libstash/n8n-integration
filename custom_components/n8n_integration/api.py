@@ -87,10 +87,9 @@ class N8nIntegrationApiClient:
         url = f"{self._url}/webhook/{path}"
         headers = {}
 
-        last_triggered_at = options.get("last_triggered_at")
         params = {}
-        if last_triggered_at is not None:
-            params["last_triggered_at"] = str(last_triggered_at)
+        if last_triggered := options.get("_last_triggered_at"):
+            params["_last_triggered_at"] = str(last_triggered)
 
         return await self._api_wrapper(
             method=method,

@@ -83,7 +83,7 @@ class N8nWorkflowButton(N8nIntegrationEntity, ButtonEntity):
         """Handle the button press to trigger the workflow webhook node."""
         options = {}
         if self._last_triggered_at is not None:
-            options["last_triggered_at"] = self._last_triggered_at
+            options["_last_triggered_at"] = self._last_triggered_at
 
         client = self.coordinator.config_entry.runtime_data.client
 
