@@ -2,12 +2,6 @@
 
 Connect Home Assistant to your n8n instance. This integration discovers active workflows, exposes webhook triggers as buttons you can use directly in Home Assistant or automate, and lists both webhook endpoints and form triggers.
 
-## Features
-
-- Creates a button entity for every `webhook` node in your active n8n workflows so you can fire the webhook from Home Assistant.
-- Exposes a read-only triggers list entity that enumerates webhook and form triggers; form triggers include the generated form URL for convenience.
-- Uses Home Assistant's config flow (UI setup) with validation against your n8n API.
-
 ## Requirements
 
 - A reachable n8n base URL (for example, https://n8n.example.com).
@@ -58,7 +52,7 @@ Sensors represent active Webhook and Form triggers. These are read-only and incl
 
 ## Example: Active n8n Form Triggers
 
-This Markdown card dynamically lists links to your available n8n form triggers in the Home Assistant UI.
+This Markdown card dynamically lists available form triggers in the Home Assistant UI:
 
 ```jinja2
 ### Active n8n Form Triggers
