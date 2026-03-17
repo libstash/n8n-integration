@@ -88,7 +88,7 @@ class N8nIntegrationApiClient:
         headers = {}
 
         params = {}
-        if (last_triggered := options.get("_last_triggered_at")):
+        if last_triggered := options.get("_last_triggered_at"):
             params["_last_triggered_at"] = str(last_triggered)
 
         return await self._api_wrapper(
