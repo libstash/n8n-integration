@@ -1,0 +1,248 @@
+{
+  "name": "Success or error workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Success or error workflow",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Result",
+              "fieldType": "radio",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "success"
+                  },
+                  {
+                    "option": "error"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [0, 0],
+      "id": "035e12db-885b-4099-95a1-9db26727ebb1",
+      "name": "On form submission",
+      "webhookId": "f7cbe543-b48c-451c-a53c-308983bc7f14"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.Result }}",
+                    "rightValue": "success",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "86c4edfe-87c7-42b0-a2aa-558dd8977812"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "bcc00f4f-5ab9-474b-a67d-dac3cceb4bdc",
+                    "leftValue": "={{ $json.Result }}",
+                    "rightValue": "error",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [224, 0],
+      "id": "1ada2493-a42d-49a7-8eb6-f31ab9cbf9c6",
+      "name": "Switch"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [448, -96],
+      "id": "f948132e-bdd5-4ef6-9561-57ed3cbdb6c6",
+      "name": "Done",
+      "notesInFlow": true,
+      "notes": "success"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "yVsYgiITp5zEowYh",
+          "mode": "list",
+          "cachedResultName": "Workflow results",
+          "cachedResultUrl": "/projects/WUhSE1CPQifIwPNe/datatables/yVsYgiITp5zEowYh"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflowId": "={{ $workflow.id }}",
+            "message": "=Success message. Form submited at:{{ $input.first().json.submittedAt }}",
+            "type": "success",
+            "workflowName": "={{ $workflow.name }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "workflowId",
+              "displayName": "workflowId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "workflowName",
+              "displayName": "workflowName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [672, -96],
+      "id": "0bd1d13b-9568-4389-ab51-04936fc79dfa",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "jsCode": "throw Error(\"Test error workflow\");\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [448, 96],
+      "id": "bf1be622-1d18-4d36-8552-ab8f2f0bc9b3",
+      "name": "Error in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Done",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Done": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "tsUfkphvK4Z9k2mD-Hy6a"
+  },
+  "versionId": "d2c34c5a-7489-4aae-a9b6-3914e07ea100",
+  "meta": {
+    "instanceId": "f5f445528f4a0134354c891fbd95fd0734d25cb2c9206c4684545ae49b14d29b"
+  },
+  "id": "w3GLU7o8JR6Jm5rHM2Xzx",
+  "tags": [
+    {
+      "updatedAt": "2026-02-16T20:40:11.853Z",
+      "createdAt": "2026-02-16T20:40:11.853Z",
+      "id": "Z7RzkymBxZtSjVNK",
+      "name": "test"
+    }
+  ]
+}

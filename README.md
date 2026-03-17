@@ -40,16 +40,107 @@ Connect Home Assistant to your n8n instance. This integration discovers active w
 - Buttons: One per `webhook` node in each active workflow. Pressing the button triggers the corresponding webhook in n8n.
 - Triggers list: A read-only list named **n8n triggers** containing webhook and form triggers. Items show workflow and node names; form trigger items include the form URL in the description.
 
-## Example: trigger links card
+## Example: Active n8n Form Triggers
 
 Add a Markdown card that lists links to available form triggers:
 
-```
-{% set items = state_attr('todo.n8n_triggers', 'triggers') or [] %}
+```jinja2
+### Active n8n Form Triggers
+{% set forms = states.sensor
+  | selectattr('attributes.workflow_name', 'defined')
+  | selectattr('attributes.type', 'eq', 'n8n-nodes-base.formTrigger')
+  | list %}
 
-{% for item in items %}
-- {% if item.description %}[{{ item.name }}]({{ item.description }}){% else %}{{ item.name }}{% endif %}
+{% if forms | length > 0 %} | Form name | Edit Workflow | Form Link |
+| :--- | :--- | :--- |
+{% for state in forms %} | {{ state.name }} | [✏️]({{ state.attributes.n8n_url}}/workflow/{{ state.attributes.workflow_id }}) | [📋]({{ state.attributes.form_url }}) |
 {% endfor %}
+{% else %}
+*No active form triggers found.*
+{% endif %}
+```
+
+# Example: Notifications from n8n to HomeAssistant
+
+Create HomeAssistant notifications for success/error results from workflows
+
+## Data table
+
+To store workflow outputs
+Columns:
+
+```
+id,workflowId,workflowName,message,type,createdAt,updatedAt
+```
+
+## Error handler workflow
+
+Handles error from other workflows and insert `error` output result into the Data table
+![Error handler](image-3.png)
+[examples/Error handler.json](<examples/Error handler.json>)
+
+## Success or error workflow
+
+Example workflow that can output success or error.
+To handle error in the workflow settings set the `Error Workflow (to notify when this one errors)` to the [# Error handler](#Error_handler)
+
+![Success or error workflow](image-2.png)
+![Form](image-1.png)
+
+[examples/Success or error.json](<examples/Success or error.json>)
+
+## Notifications endpoint workflow
+
+Responds to HomeAssistant with list of recent results from outputs.
+
+![Notifications endpoint workflow](image-4.png)
+[examples/Notifications endpoint](<examples/Notifications endpoint.json>)
+
+## Create notifications
+
+Create basic presistant notification for each logged Workflow output
+Go to the _n8n Integration_ and select the `Notifications endpoint`
+
+Then in Automations - Create auutomation with device. And add
+
+```yaml
+alias: Create notifications
+description: ""
+triggers:
+  - trigger: state
+    entity_id:
+      - button.notifications_endpoint_webhook
+    attribute: response
+conditions: []
+actions:
+  - variables:
+      messages: >-
+        {{ state_attr('button.notifications_endpoint_webhook', 'response')
+        }}
+  - choose: []
+    default:
+      - repeat:
+          for_each: "{{ messages }}"
+          sequence:
+            - data:
+                message: "{{ repeat.item.message }}"
+              action: notify.persistent_notification
+mode: single
+```
+
+## Trigger Notifications Webhook repitedly
+
+```yaml
+alias: Trigger Notifications Webhook Every Minute
+description: Automatically press button.notifications_endpoint_webhook every minute
+triggers:
+  - minutes: "*"
+    trigger: time_pattern
+actions:
+  - target:
+      entity_id: button.notifications_endpoint_webhook
+    action: button.press
+mode: single
 ```
 
 ## How it works
