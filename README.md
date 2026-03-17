@@ -33,13 +33,13 @@ Connect Home Assistant to your n8n instance. This integration discovers active w
 
 Entities are automatically grouped into Devices named after their parent n8n workflow.
 
-# Buttons
+### Buttons
 
 One button is created for every Webhook node in each active workflow.
 
 - **Action:** Pressing the button triggers the corresponding webhook in n8n.
 
-# Sensors
+### Sensors
 
 Sensors represent active Webhook and Form triggers. These are read-only and include the following metadata in their state attributes:
 
