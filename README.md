@@ -76,7 +76,7 @@ id,workflowId,workflowName,message,type,createdAt,updatedAt
 
 This workflow catches errors from other processes and logs an `error` entry into your Data Table.
 
-![Error handler](examples/image-3.png)
+![Error handler](<examples/Error handler workflow.png>)
 [examples/Error handler.json](<examples/Error handler.json>)
 
 ## Workflow implementation
@@ -86,8 +86,8 @@ When building workflows that should report their status:
 1. Open Workflow Settings.
 2. Set the `Error Workflow (to notify when this one errors)` to point to your [Error handler workflow](#2-error-handler-workflow).
 
-![Success or error workflow](examples/image-2.png)
-![Form](examples/image-1.png)
+![Success or error workflow](<examples/Success or error workflow.png>)
+![Form](<examples/Success or error form.png>)
 
 [examples/Success or error.json](<examples/Success or error.json>)
 
@@ -95,7 +95,7 @@ When building workflows that should report their status:
 
 This workflow acts as an API endpoint, allowing HomeAssistant to fetch the most recent workflow results.
 
-![Notifications endpoint workflow](examples/image-4.png)
+![Notifications endpoint workflow](<examples/Notifications endpoint workflow.png>)
 [examples/Notifications endpoint.json](<examples/Notifications endpoint.json>)
 
 ## Home Assistant Configuration
