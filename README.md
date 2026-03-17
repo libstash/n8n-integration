@@ -1,6 +1,6 @@
 # n8n Integration for Home Assistant
 
-Connect Home Assistant to your n8n instance. This integration discovers active workflows, exposes webhook triggers as buttons you can press from Home Assistant, and lists trigger endpoints and forms in the **n8n triggers** list.
+Connect Home Assistant to your n8n instance. This integration discovers active workflows, exposes webhook triggers as buttons you can use directly in Home Assistant or automate, and lists both webhook endpoints and form triggers.
 
 ## Features
 
