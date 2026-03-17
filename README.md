@@ -42,66 +42,73 @@ Connect Home Assistant to your n8n instance. This integration discovers active w
 
 ## Example: Active n8n Form Triggers
 
-Add a Markdown card that lists links to available form triggers:
+This Markdown card dynamically lists links to your available n8n form triggers in the Home Assistant UI.
 
 ```jinja2
 ### Active n8n Form Triggers
 {% set forms = states.sensor
-  | selectattr('attributes.workflow_name', 'defined')
+  | selectattr('attributes.type', 'defined')
   | selectattr('attributes.type', 'eq', 'n8n-nodes-base.formTrigger')
   | list %}
 
-{% if forms | length > 0 %} | Form name | Edit Workflow | Form Link |
-| :--- | :--- | :--- |
-{% for state in forms %} | {{ state.name }} | [✏️]({{ state.attributes.n8n_url}}/workflow/{{ state.attributes.workflow_id }}) | [📋]({{ state.attributes.form_url }}) |
-{% endfor %}
+{% if forms | length > 0 %}
+| Workflow/Form Name | Workflow | Link |
+| :--- | :---: | :---: |{% for state in forms %}
+| {{ state.name }} | [✏️]({{ state.attributes.n8n_url }}/workflow/{{ state.attributes.workflow_id }}) | [🌐]({{ state.attributes.form_url }}) |{% endfor %}
 {% else %}
-*No active form triggers found.*
+> ℹ️ **No active form triggers found.** > Check if your n8n workflows are active and the integration is connected.
 {% endif %}
 ```
 
-# Example: Notifications from n8n to HomeAssistant
+# Example: Workflow Notifications (n8n to Home Assistant)
 
-Create HomeAssistant notifications for success/error results from workflows
+Set up Home Assistant notifications to monitor success or error results from your n8n workflows.
 
-## Data table
+## 1. Data table
 
-To store workflow outputs
-Columns:
+To track workflow outputs, create a table with the following schema:
 
 ```
 id,workflowId,workflowName,message,type,createdAt,updatedAt
 ```
 
-## Error handler workflow
+## 2. Error handler workflow
 
-Handles error from other workflows and insert `error` output result into the Data table
-![Error handler](image-3.png)
+This workflow catches errors from other processes and logs an `error` entry into your Data Table.
+
+![Error handler](examples/image-3.png)
 [examples/Error handler.json](<examples/Error handler.json>)
 
-## Success or error workflow
+## Workflow implementation
 
-Example workflow that can output success or error.
-To handle error in the workflow settings set the `Error Workflow (to notify when this one errors)` to the [# Error handler](#Error_handler)
+When building workflows that should report their status:
 
-![Success or error workflow](image-2.png)
-![Form](image-1.png)
+1. Open Workflow Settings.
+2. Set the `Error Workflow (to notify when this one errors)` to point to your [Error handler workflow](#2-error-handler-workflow).
+
+![Success or error workflow](examples/image-2.png)
+![Form](examples/image-1.png)
 
 [examples/Success or error.json](<examples/Success or error.json>)
 
-## Notifications endpoint workflow
+## 4. Notifications Endpoint
 
-Responds to HomeAssistant with list of recent results from outputs.
+This workflow acts as an API endpoint, allowing HomeAssistant to fetch the most recent workflow results.
 
-![Notifications endpoint workflow](image-4.png)
-[examples/Notifications endpoint](<examples/Notifications endpoint.json>)
+![Notifications endpoint workflow](examples/image-4.png)
+[examples/Notifications endpoint.json](<examples/Notifications endpoint.json>)
 
-## Create notifications
+## Home Assistant Configuration
 
-Create basic presistant notification for each logged Workflow output
-Go to the _n8n Integration_ and select the `Notifications endpoint`
+### Create Notifications Automation
 
-Then in Automations - Create auutomation with device. And add
+This automation processes the response from your n8n endpoint and generates a persistent notification for each entry.
+
+**Setup:**
+
+1. Go to the **n8n Integration**.
+2. Select the **Notifications endpoint** entity.
+3. Create a new automation using the following YAML:
 
 ```yaml
 alias: Create notifications
@@ -128,7 +135,9 @@ actions:
 mode: single
 ```
 
-## Trigger Notifications Webhook repitedly
+### Polling for Updates
+
+Since the integration relies on a webhook response via a button press, use this automation to check for new notifications every minute:
 
 ```yaml
 alias: Trigger Notifications Webhook Every Minute
