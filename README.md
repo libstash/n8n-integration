@@ -37,8 +37,24 @@ Connect Home Assistant to your n8n instance. This integration discovers active w
 
 ## Entities
 
-- Buttons: One per `webhook` node in each active workflow. Pressing the button triggers the corresponding webhook in n8n.
-- Triggers list: A read-only list named **n8n triggers** containing webhook and form triggers. Items show workflow and node names; form trigger items include the form URL in the description.
+Entities are automatically grouped into Devices named after their parent n8n workflow.
+
+# Buttons
+
+One button is created for every Webhook node in each active workflow.
+
+- **Action:** Pressing the button triggers the corresponding webhook in n8n.
+
+# Sensors
+
+Sensors represent active Webhook and Form triggers. These are read-only and include the following metadata in their state attributes:
+
+- **Attributes:**
+  - **workflow_id:** The unique ID of the n8n workflow.
+  - **workflow_name:** The name of the workflow.
+  - **n8n_url:** The base URL of your n8n instance.
+  - **type:** The specific node type (e.g., n8n-nodes-base.formTrigger, n8n-nodes-base.webhook).
+  - **form_url:** (Form triggers only) The direct URL to the n8n form.
 
 ## Example: Active n8n Form Triggers
 
@@ -100,7 +116,7 @@ This workflow acts as an API endpoint, allowing HomeAssistant to fetch the most 
 
 ## Home Assistant Configuration
 
-### Create Notifications Automation
+### Create Notifications
 
 This automation processes the response from your n8n endpoint and generates a persistent notification for each entry.
 
@@ -155,8 +171,8 @@ mode: single
 ## How it works
 
 - The integration pulls active workflows from n8n `GET /api/v1/workflows?active=true` using your API token.
-- Only webhook- and form-based triggers are displayed; other node types are ignored.
-- **Note:** A `_last_triggered_at` timestamp is added to webhooks query param to prevent duplicate notifications and filter for only the latest updates.
+- Only webhook and form triggers are displayed; other node types are ignored.
+- **State Tracking:** A `_last_triggered_at` timestamp is added to webhooks query param to prevent duplicate notifications and filter for only the latest updates.
 
 ## Troubleshooting
 
