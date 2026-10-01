@@ -72,10 +72,19 @@ class N8nIntegrationApiClient:
         self,
         webhook_node: WorkflowNode,
         options: dict[str, Any],
+        payload: dict[str, Any] | None = None,
+        method: str | None = None,
     ) -> Any:
         """Trigger the n8n webhook node using its parameters."""
         parameters = webhook_node.get("parameters", {})
-        method = parameters.get("httpMethod", "GET")
+        node_method = parameters.get("httpMethod", "GET")
+        if isinstance(node_method, list):
+            available = [m.upper() for m in node_method]
+            if method and method.upper() in available:
+                node_method = method.upper()
+            else:
+                node_method = available[0] if available else None
+        method = node_method
         path = parameters.get("path")
         if not method or not path:
             msg = (
@@ -91,9 +100,17 @@ class N8nIntegrationApiClient:
         if last_triggered := options.get("_last_triggered_at"):
             params["_last_triggered_at"] = str(last_triggered)
 
+        data = None
+        if payload:
+            if method in ("get", "head"):
+                params.update({key: str(value) for key, value in payload.items()})
+            else:
+                data = payload
+
         return await self._api_wrapper(
             method=method,
             url=url,
+            data=data,
             headers=headers,
             params=params,
         )
