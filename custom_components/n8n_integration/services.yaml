@@ -1,0 +1,13 @@
+trigger_webhook:
+  fields:
+    entity_id:
+      required: true
+      selector:
+        entity:
+          integration: n8n_integration
+          domain: sensor
+    payload:
+      required: false
+      example: '{"message": "Hello from Home Assistant"}'
+      selector:
+        object:

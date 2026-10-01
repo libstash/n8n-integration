@@ -72,6 +72,7 @@ class N8nIntegrationApiClient:
         self,
         webhook_node: WorkflowNode,
         options: dict[str, Any],
+        payload: dict[str, Any] | None = None,
     ) -> Any:
         """Trigger the n8n webhook node using its parameters."""
         parameters = webhook_node.get("parameters", {})
@@ -91,9 +92,17 @@ class N8nIntegrationApiClient:
         if last_triggered := options.get("_last_triggered_at"):
             params["_last_triggered_at"] = str(last_triggered)
 
+        data = None
+        if payload:
+            if method in ("get", "head"):
+                params.update({key: str(value) for key, value in payload.items()})
+            else:
+                data = payload
+
         return await self._api_wrapper(
             method=method,
             url=url,
+            data=data,
             headers=headers,
             params=params,
         )

@@ -31,5 +31,21 @@
       "connection": "Unable to connect to the server.",
       "unknown": "Unknown error occurred."
     }
+  },
+  "services": {
+    "trigger_webhook": {
+      "name": "Trigger webhook",
+      "description": "Triggers the n8n webhook of the targeted workflow sensor, optionally sending a payload.",
+      "fields": {
+        "entity_id": {
+          "name": "Webhook sensor",
+          "description": "The n8n webhook sensor to trigger."
+        },
+        "payload": {
+          "name": "Payload",
+          "description": "Data sent to the webhook. Sent as the JSON body, or as query parameters for GET webhooks."
+        }
+      }
+    }
   }
 }

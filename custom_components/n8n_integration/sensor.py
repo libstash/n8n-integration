@@ -4,11 +4,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+import voluptuous as vol
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
 )
+from homeassistant.core import SupportsResponse
+from homeassistant.exceptions import ServiceValidationError
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.util import dt as dt_util
 
@@ -18,7 +23,7 @@ from .entity import N8nIntegrationEntity
 if TYPE_CHECKING:
     from datetime import datetime
 
-    from homeassistant.core import HomeAssistant
+    from homeassistant.core import HomeAssistant, ServiceResponse
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
     from .coordinator import N8nDataUpdateCoordinator
@@ -26,7 +31,11 @@ if TYPE_CHECKING:
     from .models import Workflow, WorkflowNode
 
 
-TRIGGER_NODES = {"n8n-nodes-base.webhook", "n8n-nodes-base.formTrigger"}
+WEBHOOK_NODE = "n8n-nodes-base.webhook"
+TRIGGER_NODES = {WEBHOOK_NODE, "n8n-nodes-base.formTrigger"}
+
+SERVICE_TRIGGER_WEBHOOK = "trigger_webhook"
+ATTR_PAYLOAD = "payload"
 
 
 async def async_setup_entry(
@@ -51,6 +60,14 @@ async def async_setup_entry(
     ]
 
     async_add_entities(entities)
+
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        SERVICE_TRIGGER_WEBHOOK,
+        {vol.Optional(ATTR_PAYLOAD): vol.Schema({cv.string: object})},
+        "async_handle_trigger_webhook",
+        supports_response=SupportsResponse.OPTIONAL,
+    )
 
 
 class N8nIntegrationTriggerSensor(N8nIntegrationEntity, SensorEntity):
@@ -82,6 +99,8 @@ class N8nIntegrationTriggerSensor(N8nIntegrationEntity, SensorEntity):
         self._attr_icon = "mdi:transit-connection-horizontal"
         self._attr_name = f"{workflow_name}: {node_name}"
 
+        self._last_triggered_at: str | None = None
+
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes."""
@@ -107,6 +126,26 @@ class N8nIntegrationTriggerSensor(N8nIntegrationEntity, SensorEntity):
                 )
 
         return attrs
+
+    async def async_handle_trigger_webhook(
+        self, payload: dict[str, Any] | None = None
+    ) -> ServiceResponse:
+        """Handle the trigger_webhook action with an optional payload."""
+        if self._node.get("type") != WEBHOOK_NODE:
+            msg = f"{self.entity_id} is not a webhook trigger and cannot be triggered"
+            raise ServiceValidationError(msg)
+
+        options = {}
+        if self._last_triggered_at is not None:
+            options["_last_triggered_at"] = self._last_triggered_at
+
+        client = self.coordinator.config_entry.runtime_data.client
+
+        result = await client.async_trigger_webhook(self._node, options, payload)
+
+        self._last_triggered_at = dt_util.utcnow().isoformat()
+        await self.coordinator.async_request_refresh()
+        return {"response": result}
 
     @property
     def native_value(self) -> datetime | None:
