@@ -44,6 +44,10 @@
         "payload": {
           "name": "Payload",
           "description": "Data sent to the webhook. Sent as the JSON body, or as query parameters for GET webhooks."
+        },
+        "method": {
+          "name": "HTTP method",
+          "description": "HTTP method to use when the webhook allows multiple methods. Defaults to the first allowed method if not set or not allowed."
         }
       }
     }

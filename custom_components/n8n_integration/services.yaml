@@ -11,3 +11,15 @@ trigger_webhook:
       example: '{"message": "Hello from Home Assistant"}'
       selector:
         object:
+    method:
+      required: false
+      example: POST
+      selector:
+        select:
+          options:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - HEAD

@@ -36,6 +36,8 @@ TRIGGER_NODES = {WEBHOOK_NODE, "n8n-nodes-base.formTrigger"}
 
 SERVICE_TRIGGER_WEBHOOK = "trigger_webhook"
 ATTR_PAYLOAD = "payload"
+ATTR_METHOD = "method"
+HTTP_METHODS = ["DELETE", "GET", "HEAD", "PATCH", "POST", "PUT"]
 
 
 async def async_setup_entry(
@@ -64,7 +66,10 @@ async def async_setup_entry(
     platform = entity_platform.async_get_current_platform()
     platform.async_register_entity_service(
         SERVICE_TRIGGER_WEBHOOK,
-        {vol.Optional(ATTR_PAYLOAD): vol.Schema({cv.string: object})},
+        {
+            vol.Optional(ATTR_PAYLOAD): vol.Schema({cv.string: object}),
+            vol.Optional(ATTR_METHOD): vol.All(vol.Upper, vol.In(HTTP_METHODS)),
+        },
         "async_handle_trigger_webhook",
         supports_response=SupportsResponse.OPTIONAL,
     )
@@ -128,9 +133,11 @@ class N8nIntegrationTriggerSensor(N8nIntegrationEntity, SensorEntity):
         return attrs
 
     async def async_handle_trigger_webhook(
-        self, payload: dict[str, Any] | None = None
+        self,
+        payload: dict[str, Any] | None = None,
+        method: str | None = None,
     ) -> ServiceResponse:
-        """Handle the trigger_webhook action with an optional payload."""
+        """Handle the trigger_webhook action with an optional payload and method."""
         if self._node.get("type") != WEBHOOK_NODE:
             msg = f"{self.entity_id} is not a webhook trigger and cannot be triggered"
             raise ServiceValidationError(msg)
@@ -141,7 +148,9 @@ class N8nIntegrationTriggerSensor(N8nIntegrationEntity, SensorEntity):
 
         client = self.coordinator.config_entry.runtime_data.client
 
-        result = await client.async_trigger_webhook(self._node, options, payload)
+        result = await client.async_trigger_webhook(
+            self._node, options, payload, method
+        )
 
         self._last_triggered_at = dt_util.utcnow().isoformat()
         await self.coordinator.async_request_refresh()
