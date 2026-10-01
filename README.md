@@ -70,106 +70,83 @@ This Markdown card dynamically lists available form triggers in the Home Assista
 {% endif %}
 ```
 
-# Example: Workflow Notifications (n8n to Home Assistant)
+## Example: Workflow Notifications (n8n to Home Assistant)
 
-Set up Home Assistant notifications to monitor success or error results from your n8n workflows.
+Push success or error messages from your n8n workflows to Home Assistant as persistent notifications.
 
-## 1. Data table
+### 1. Home Assistant: create the webhook automation
 
-To track workflow outputs, create a table with the following schema:
+This automation listens on a Home Assistant webhook and creates a persistent notification for every message n8n sends.
 
-```
-id,workflowId,workflowName,message,type,createdAt,updatedAt
-```
-
-## 2. Error handler workflow
-
-This workflow catches errors from other processes and logs an `error` entry into your Data Table.
-
-![Error handler](<examples/Error handler workflow.png>)
-[examples/Error handler.json](<examples/Error handler.json>)
-
-## Workflow implementation
-
-When building workflows that should report their status:
-
-1. Open Workflow Settings.
-2. Set the `Error Workflow (to notify when this one errors)` to point to your [Error handler workflow](#2-error-handler-workflow).
-
-![Success or error workflow](<examples/Success or error workflow.png>)
-![Form](<examples/Success or error form.png>)
-
-[examples/Success or error.json](<examples/Success or error.json>)
-
-## 4. Notifications Endpoint
-
-This workflow acts as an API endpoint, allowing HomeAssistant to fetch the most recent workflow results.
-
-![Notifications endpoint workflow](<examples/Notifications endpoint workflow.png>)
-[examples/Notifications endpoint.json](<examples/Notifications endpoint.json>)
-
-## Home Assistant Configuration
-
-### Create Notifications
-
-This automation processes the response from your n8n endpoint and generates a persistent notification for each entry.
-
-**Setup:**
-
-1. Go to the **n8n Integration**.
-2. Select the **Notifications endpoint** entity.
-3. Create a new automation using the following YAML:
+1. Go to **Settings** → **Automations & Scenes** → **Create Automation**.
+2. Open the menu (⋮) → **Edit in YAML** and paste:
 
 ```yaml
-alias: Create notifications
-description: ""
+alias: Receive n8n notification
+description: Create a persistent notification from an n8n webhook call
 triggers:
-  - trigger: state
-    entity_id:
-      - button.notifications_endpoint_webhook
-    attribute: response
+  - trigger: webhook
+    allowed_methods:
+      - POST
+      - PUT
+    local_only: true
+    webhook_id: n8n_notification
 conditions: []
 actions:
-  - variables:
-      messages: >-
-        {{ state_attr('button.notifications_endpoint_webhook', 'response')
-        }}
-  - choose: []
-    default:
-      - repeat:
-          for_each: "{{ messages }}"
-          sequence:
-            - data:
-                message: "{{ repeat.item.message }}"
-              action: notify.persistent_notification
-mode: single
+  - action: persistent_notification.create
+    data:
+      title: n8n
+      message: >-
+        {%- if trigger.json.type == 'error' -%}
+          {{ trigger.json.workflowName }}: {{ trigger.json.message }}
+        {%- else -%}
+          {{ trigger.json.message }}
+        {%- endif -%}
+mode: queued
 ```
 
-### Polling for Updates
+### 2. n8n: create the "Notify HomeAssistant" workflow
 
-Since the integration relies on a webhook response via a button press, use this automation to check for new notifications every minute:
+![Notify HomeAssistant](<examples/Notify HomeAssistant.png>)
+[examples/Notify HomeAssistant.json](<examples/Notify HomeAssistant.json>)
 
-```yaml
-alias: Trigger Notifications Webhook Every Minute
-description: Automatically press button.notifications_endpoint_webhook every minute
-triggers:
-  - minutes: "*"
-    trigger: time_pattern
-actions:
-  - target:
-      entity_id: button.notifications_endpoint_webhook
-    action: button.press
-mode: single
+Open the **HTTP Request** node and adjust the URL to your setup:
+
+```
+http://<your-home-assistant>:8123/api/webhook/<webhook_id>
 ```
 
-## How it works
+The `webhook_id` must match the one in the automation above (`n8n_notification` by default).
 
-- The integration pulls active workflows from n8n `GET /api/v1/workflows?active=true` using your API token.
-- Only webhook and form triggers are displayed; other node types are ignored.
-- **State Tracking:** A `_last_triggered_at` timestamp is added to webhooks query param to allow for filtering only the latest updates.
+### 3. n8n: send notifications from your workflows
+
+In any workflow, add an **Execute Workflow** node that calls **Notify HomeAssistant** and passes an item with these fields:
+
+1. Add an **Edit Fields (Set)** node and create these fields:
+
+   | Field          | Description                                                                   |
+   | :------------- | :---------------------------------------------------------------------------- |
+   | `message`      | The notification text.                                                        |
+   | `type`         | `success` or `error`                                                          |
+   | `workflowName` | Name of the workflow that produced the message (e.g. `{{ $workflow.name }}`). |
+
+2. Connect it to an **Execute Sub-workflow** and select **Notify HomeAssistant**.
+
+The item that reaches Home Assistant then looks like this:
+
+```json
+{
+  "type": "error",
+  "workflowName": "Daily backup",
+  "message": "Backup failed: disk full"
+}
+```
+
+To get notified about failures automatically, create an error workflow with an **Error Trigger** node that calls **Notify HomeAssistant**, then select it under **Workflow Settings** → **Error Workflow** in the workflows you want to monitor.
 
 ## Troubleshooting
 
 - Auth errors: Confirm the API token is valid and belongs to the provided n8n URL.
 - Connection errors: Ensure Home Assistant can reach the n8n URL (network, SSL, reverse proxy).
 - Missing entities: Verify the workflows are active and contain `webhook` or `formTrigger` nodes.
+- Notifications not appearing: Check that the HTTP Request URL and `webhook_id` match the automation, and that n8n can reach Home Assistant. If n8n is outside your local network, disable `local_only`.

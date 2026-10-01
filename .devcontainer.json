@@ -1,6 +1,10 @@
 {
     "name": "ludeeus/integration_blueprint",
     "image": "mcr.microsoft.com/devcontainers/python:3.13",
+    "runArgs": [
+        "--network=n8n-net",
+        "--network-alias=homeassistant"
+    ],
     "postCreateCommand": "scripts/setup",
     "forwardPorts": [
         8123
