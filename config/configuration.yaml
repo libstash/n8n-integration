@@ -10,5 +10,3 @@ logger:
   default: info
   logs:
     custom_components.n8n_integration: debug
-
-automation: !include automations.yaml
