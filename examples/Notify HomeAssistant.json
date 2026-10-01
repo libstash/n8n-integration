@@ -1,0 +1,64 @@
+{
+  "name": "Notify HomeAssistant",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://homeassistant.local:8123/api/webhook/n8n_notification",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [448, -368],
+      "id": "aaa4872e-e16d-4ce8-b6bf-bc5ddbe82876",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [224, -368],
+      "id": "563f096f-a83e-4740-b403-46e0814ffe5a",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "cc2efecb-8c0d-4e59-a4c6-9b2b10a1f917",
+  "meta": {
+    "instanceId": "f5f445528f4a0134354c891fbd95fd0734d25cb2c9206c4684545ae49b14d29b"
+  },
+  "id": "ayE73qfubfGKi5tS",
+  "tags": [
+    {
+      "updatedAt": "2026-02-16T20:40:11.853Z",
+      "createdAt": "2026-02-16T20:40:11.853Z",
+      "id": "Z7RzkymBxZtSjVNK",
+      "name": "test"
+    }
+  ]
+}
